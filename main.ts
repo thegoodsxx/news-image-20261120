@@ -1,30 +1,31 @@
-const fs = require("node:fs");
-const path = require("node:path");
-const process = require("node:process");
+import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Entry runner for news-image-20261120 make.fun competition.
- * Copies the pre-rendered entry poster to the designated output directory.
+ * Delivers entry.png to the designated output directory.
  */
 function deliverEntry(): void {
-  const outputDir: string = process.env.MAKEFUN_OUTPUT_DIR || "/output";
-  const sourceImage: string = path.resolve(process.cwd(), "entry.png");
-  const destinationImage: string = path.join(outputDir, "entry.png");
+  const scriptDir: string = dirname(fileURLToPath(import.meta.url));
+  const sourceImage: string = join(scriptDir, "entry.png");
+  const targetDir: string = process.env.MAKEFUN_OUTPUT_DIR || "/output";
+  const targetImage: string = join(targetDir, "entry.png");
 
-  if (!fs.existsSync(sourceImage)) {
-    console.error(`Error: source image not found at ${sourceImage}`);
+  if (!existsSync(sourceImage)) {
+    console.error(`Error: source entry image not found at ${sourceImage}`);
     process.exit(1);
   }
 
   try {
-    fs.mkdirSync(outputDir, { recursive: true });
-    fs.copyFileSync(sourceImage, destinationImage);
+    mkdirSync(targetDir, { recursive: true });
+    copyFileSync(sourceImage, targetImage);
 
-    const stats = fs.statSync(destinationImage);
-    console.log(`Successfully delivered entry to ${destinationImage} (${stats.size} bytes).`);
+    const stats = statSync(targetImage);
+    console.log(`Delivered entry.png to ${targetImage} (${stats.size} bytes).`);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`Failed to copy entry image: ${message}`);
+    console.error(`Failed to deliver entry image: ${message}`);
     process.exit(1);
   }
 }
